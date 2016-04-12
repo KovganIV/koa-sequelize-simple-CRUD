@@ -9,13 +9,13 @@
 
 module.exports = function(sequelize, offsetF, countF, qF, searchArray, sortFieldF, sortFields) {
   return {
-    getConfig: function(request) {
+    getConfig: function(ctx) {
       var config = {};
 
-      var q = request.query[qF];
-      var offset = request.query[offsetF];
-      var count = request.query[countF];
-      var sortField = request.query[sortFieldF];
+      var q = ctx.request.query[qF];
+      var offset = ctx.request.query[offsetF];
+      var count = ctx.request.query[countF];
+      var sortField = ctx.request.query[sortFieldF];
 
       config.where = {};
       if (q && searchArray.length > 0) {
@@ -38,8 +38,8 @@ module.exports = function(sequelize, offsetF, countF, qF, searchArray, sortField
         }
       }
 
-      if (offset) config.offset = offset;
-      if (count) config.limit = count;
+      if (offset && !isNaN(offset)) config.offset = offset;
+      if (count && !isNaN(offset)) config.limit = count;
       config.subQuery = false;
       return config;
     }

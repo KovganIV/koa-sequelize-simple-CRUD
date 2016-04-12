@@ -30,17 +30,21 @@ function Controller(Model) {
 
   // CRUD methods
 
-  function getItem(request, response) {
+  function *getItem() {
+    var ctx = this;
     var id = request.params.id;
     // Need 'id' field
-    if (!id) return response.status(400).json({error: 'Wrong id'});
+    if (!id) {
+      ctx.status = 400;
+      return ctx.body = {error: 'Wrong id'};
+    }
 
-    Model
+    yield Model
       .findById(id)
       .then(function(result) {
-        if (!result) return response.sendStatus(404);
+        if (!result) return ctx.status = 404;
 
-        response.json({response: {item: result}});
+        ctx.body = {item: result};
       })
       .catch(function(error) {
         if (errorFunction) errorFunction(response, error, function() {error500(response, error)});
@@ -48,21 +52,24 @@ function Controller(Model) {
       });
   }
 
-  function getItems(request, response) {
-    var config = queryHelper.getConfig(request);
+  function *getItems() {
+    var ctx = this;
+    var config = queryHelper.getConfig(ctx);
 
-    Model
+    yield Model
       .findAndCount(config)
       .then(function(result) {
-        response.json({response: {count: result.count, items: result.rows}});
+        ctx.body = ({count: result.count, items: result.rows});
       })
       .catch(function(error) {
         console.log(error.stack);
-        response.status(500).json({error: error.toString()});
+        ctx.status = 500;
+        ctx.body = {error: error.toString()};
       });
   }
 
-  function createItem(request, response) {
+  function *createItem() {
+    var ctx = this;
     var config = {};
 
     if (createMandatoryFields) {
@@ -81,10 +88,10 @@ function Controller(Model) {
       }
     }
 
-    Model
+    yield Model
       .create(config)
       .then(function(result) {
-        response.sendStatus(200);
+        ctx.status = 200;
       })
       .catch(function(error) {
         if (errorFunction) errorFunction(response, error, function() {error500(response, error)});
@@ -92,7 +99,8 @@ function Controller(Model) {
       });
   }
 
-  function updateItem(request, response) {
+  function *updateItem() {
+    var ctx = this;
     var id = request.params.id;
     // Need 'id' field
     if (!id) return response.status(400).json({error: 'Wrong id'});
@@ -115,10 +123,10 @@ function Controller(Model) {
       }
     }
 
-    Model
+    yield Model
       .update(config, {where: {id: id}})
       .then(function(result) {
-        response.sendStatus(result[0] == 0 ? 404 : 200);
+        ctx.status = result[0] == 0 ? 404 : 200;
       })
       .catch(function(error) {
         if (errorFunction) errorFunction(response, error, function() {error500(response, error)});
@@ -126,23 +134,25 @@ function Controller(Model) {
       });
   }
 
-  function deleteItem(request, response) {
+  function *deleteItem() {
+    var ctx = this;
     var id = request.params.id;
     // Need 'id' field
     if (!id) return response.status(400).json({error: 'Wrong id'});
 
-    Model
+    yield Model
       .findById(id)
       .then(function(result) {
         if (!result) {
-          response.sendStatus(404);
-          return null;
+          return ctx.status = 404;
         }
         return Model
           .destroy({where: {id: id}});
       })
       .then(function(result) {
-        if (result) return response.sendStatus(200);
+        if (result) {
+          return response.status = 200;
+        }
       })
       .catch(function(error) {
         if (errorFunction) errorFunction(response, error, function() {error500(response, error)});
