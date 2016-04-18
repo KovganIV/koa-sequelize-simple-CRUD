@@ -81,15 +81,15 @@ Your router
         'offset',
         'count',
         'q',
-        ['severity', 'source', 'message'],
+        ['severity', 'source', 'message'], // You can use relation fields. Example: 'UserModel.name'
         'filter',
         ['severity', 'source', 'message']
       ));
 
 
-    app.get('/logs/:id', logController.getItem);
-    app.get('/logs', logController.getItems);
-    app.post('/logs', logController.createItem);
-    app.put('/logs/:id', logController.updateItem);
-    app.delete('/logs/:id', logController.deleteItem);
+    router.get('/logs/:id', logController.getItem);
+    router.get('/logs', logController.getItems);
+    router.post('/logs', logController.createItem);
+    router.put('/logs/:id', logController.updateItem);
+    router.delete('/logs/:id', logController.deleteItem);
 ```

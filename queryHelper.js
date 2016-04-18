@@ -9,20 +9,43 @@
 
 module.exports = function(sequelize, offsetF, countF, qF, searchArray, sortFieldF, sortFields) {
   return {
-    getConfig: function(ctx) {
+    getConfig: function(request) {
       var config = {};
 
-      var q = ctx.request.query[qF];
-      var offset = ctx.request.query[offsetF];
-      var count = ctx.request.query[countF];
-      var sortField = ctx.request.query[sortFieldF];
+      var q = request.query[qF];
+      var offset = request.query[offsetF];
+      var count = request.query[countF];
+      var sortField = request.query[sortFieldF];
 
       config.where = {};
+      config.include = [];
+      // Supports relations or search
       if (q && searchArray.length > 0) {
         config.where.$or = [];
+        var putToInclude;
         for (var i = 0; i < searchArray.length; i++) {
-          config.where.$or.push(
-            sequelize.where(sequelize.cast(sequelize.col(searchArray[i]), 'TEXT'), 'ILIKE', '%' + q + '%'));
+          if (searchArray[i].indexOf('.') != -1) {
+            putToInclude = true;
+            break;
+          }
+        }
+
+        var likes = [];
+        for (var i = 0; i < searchArray.length; i++) {
+          if (searchArray[i].indexOf('.') != -1) {
+            var model = sequelize.model(searchArray[i].substr(0, searchArray[i].indexOf('.')));
+            if (model) {
+              config.include.push({model: model, where: {$or: []}});
+            }
+          }
+          var likeQuery = sequelize.where(sequelize.cast(sequelize.col(searchArray[i]), 'TEXT'), 'ILIKE', '%' + q + '%');
+
+          if (!putToInclude) config.where.$or.push(likeQuery);
+          else likes.push(likeQuery);
+        }
+
+        if (putToInclude && config.include.length > 0) {
+          config.include[0].where.$or = likes;
         }
       }
 
